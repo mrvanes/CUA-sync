@@ -78,7 +78,7 @@ if len(dns):
                 givenname = entry['uid'][0].decode('UTF-8')
                 sn = entry['sn'][0].decode('UTF-8')
                 uid = entry['uid'][0].decode('UTF-8')
-                user = f"sram-delena-{uid}"
+                user = f"sram-{co}-{uid}"
                 mail = entry['mail'][0].decode('UTF-8')
                 line=f"sram:{givenname}:{sn}:{user}:0:0:0:/bin/bash:0:0:{mail}:0123456789:zz:spider_login"
                 new_status[user]=line
