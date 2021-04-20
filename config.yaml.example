@@ -12,3 +12,4 @@ cua:
         - ai_res: "prj:ai_res"
         - foo: "ign:foo"
 status_filename: "/path/to/status.json"
+
