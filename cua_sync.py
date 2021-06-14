@@ -46,7 +46,7 @@ ldap.set_option(ldap.OPT_X_TLS_DEMAND, True)
 ldap_conn = ldap.initialize(uri)
 ldap_conn.simple_bind_s(binddn, passwd)
 
-new_status ={}
+new_status = {}
 try:
     with open(status_filename) as json_file:
         status = json.load(json_file)
@@ -86,8 +86,17 @@ if len(dns):
                 new_status[user]=line
                 print(f"  #user {user}")
                 if status.get(user) != line:
+                    ssh = ''
+                    if 'sshPublicKey' in entry:
+                        sshPublicKey = entry['sshPublicKey'][0].decode('UTF-8').rstrip()
+                        ssh = f'\\\n                           --ssh-public-key "{sshPublicKey}" \\\n                           '   #  Keep the spaces at the end of this string. It is used for formatting.
+
                     print(f"{modifyuser} --list {user} ||")
-                    print(f"  {{\n    echo \"{line}\" | {adduser} -f-\n    {modifyuser} --service sram:{service} {user}\n  }}\n")
+                    print(f"  {{\n    echo \"{line}\" | {adduser} -f-\n    {modifyuser} --service sram:{service} {ssh}{user}\n  }}\n")
+                #if 'sshPublicKey' in entry:
+                #    sshPublicKey = entry['sshPublicKey'][0].decode('UTF-8').rstrip()
+                #    print(f'  # SSH Public key: {sshPublicKey}')
+                #    print(f'{modifyuser} --ssh-public-key "{sshPublicKey}" {user}')
 
         # Find groups in service
         for group in cua_groups:
