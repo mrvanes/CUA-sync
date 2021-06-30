@@ -86,18 +86,30 @@ if len(dns):
                 line=f"sram:{givenname}:{sn}:{user}:0:0:0:/bin/bash:0:0:{mail}:0123456789:zz:spider_login"
                 new_status['users'][user] = {'line': line}
                 print(f"  #user {user}")
-                if status.get(user) != line:
-                    ssh = ''
-                    if 'sshPublicKey' in entry:
-                        sshPublicKey = entry['sshPublicKey'][0].decode('UTF-8').rstrip()
-                        ssh = f'\\\n                           --ssh-public-key "{sshPublicKey}" \\\n                           '   #  Keep the spaces at the end of this string. It is used for formatting.
+                user_status = status.get(user)
 
+                if user_status == None or user_status.get('line') != line:
+                    new_status['users'][user]['line'] = line
                     print(f"{modifyuser} --list {user} ||")
-                    print(f"  {{\n    echo \"{line}\" | {adduser} -f-\n    {modifyuser} --service sram:{service} {ssh}{user}\n  }}\n")
-                #if 'sshPublicKey' in entry:
-                #    sshPublicKey = entry['sshPublicKey'][0].decode('UTF-8').rstrip()
-                #    print(f'  # SSH Public key: {sshPublicKey}')
-                #    print(f'{modifyuser} --ssh-public-key "{sshPublicKey}" {user}')
+                    print(f"  {{\n    echo \"{line}\" | {adduser} -f-\n    {modifyuser} --service sram:{service} {user}\n  }}\n")
+
+                if 'sshPublicKey' in entry:
+                    raw_sshPublicKeys = entry['sshPublicKey']
+                    sshPublicKeys = set([raw_sshPublicKeys[0].decode('UTF-8').rstrip()])
+                    for key in raw_sshPublicKeys[1:]:
+                        sshPublicKeys = sshPublicKeys | key.decode('UTF-8').rstrip()
+
+                    known_sshPublicKeys = set()
+                    if user_status and 'sshPublicKey' in user_status:
+                        known_sshPublicKeys = set(user_status['sshPublicKey'])
+                    new_status['users'][user]['sshPublicKey'] = list(sshPublicKeys)
+
+                    new_sshPublicKeys = sshPublicKeys - known_sshPublicKeys
+                    dropped_sshPublicKeys = known_sshPublicKeys - sshPublicKeys
+
+                    for key in new_sshPublicKeys:
+                        print(f'  # SSH Public key: {key}')
+                        print(f'{modifyuser} --ssh-public-key "{key}" {user}')
 
         # Find groups in service
         for group in cua_groups:
