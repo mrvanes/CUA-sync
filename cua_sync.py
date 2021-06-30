@@ -46,12 +46,13 @@ ldap.set_option(ldap.OPT_X_TLS_DEMAND, True)
 ldap_conn = ldap.initialize(uri)
 ldap_conn.simple_bind_s(binddn, passwd)
 
-new_status = {}
+new_status = { 'users': {}, 'groups': {} }
+
 try:
     with open(status_filename) as json_file:
         status = json.load(json_file)
 except:
-    status = {}
+    status = { 'users': {}, 'groups': {} }
 
 
 print("#!/bin/bash")
@@ -83,7 +84,7 @@ if len(dns):
                 user = f"sram-{co}-{uid}"
                 mail = entry['mail'][0].decode('UTF-8')
                 line=f"sram:{givenname}:{sn}:{user}:0:0:0:/bin/bash:0:0:{mail}:0123456789:zz:spider_login"
-                new_status[user]=line
+                new_status['users'][user] = {'line': line}
                 print(f"  #user {user}")
                 if status.get(user) != line:
                     ssh = ''
@@ -112,7 +113,7 @@ if len(dns):
             print(f"  #group: {cua_group}")
             # Create groups
             line=f"sram_group:description:dummy:{cua_group}:0:0:0:/bin/bash:0:0:dummy:dummy:dummy:"
-            new_status[cua_group] = []
+            new_status['groups'][cua_group] = []
             if not isinstance(status.get(cua_group), list):
                 print(f"{modifyuser} --list {cua_group} ||")
                 print(f"  {{\n    echo \"{line}\" | {adduser} -f-\n  }}\n")
@@ -129,7 +130,7 @@ if len(dns):
                     for member in members:
                         m_uid = dn2rdns(member)['uid'][0]
                         user = f"sram-{co}-{m_uid}"
-                        new_status[cua_group].append(user)
+                        new_status['groups'][cua_group].append(user)
                         print(f"    #member: {user}")
                         if user not in status.get(cua_group, []):
                             if group_type == 'sys':
