@@ -158,8 +158,6 @@ if len(dns):
 
 
 new_groups = new_status['groups']
-# new_groups['sram-delena-sara_test-darkenergy-sw']['members'].remove('sram-darkenergy-gvenekamp')
-# new_groups['sram-delena-login']['members'].remove('sram-darkenergy-gvenekamp')
 groups = status['groups']
 
 for group, values in groups.items():
