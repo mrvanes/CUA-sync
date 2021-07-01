@@ -116,7 +116,11 @@ if len(dns):
             sram_group = list(group.keys())[0]
             tmp = list(group.values())[0]
             group_def, cua_group = tmp.split(':')
-            group_type = group_def.split('+')[0]
+            if '+' in group_def:
+                group_type, group_attributes = group_def.split('+', 1)
+            else:
+                group_type = group_def
+                group_attributes = []
 
             if group_type == 'ign':
                 continue
@@ -125,7 +129,7 @@ if len(dns):
             print(f"  #group: {cua_group}")
             # Create groups
             line=f"sram_group:description:dummy:{cua_group}:0:0:0:/bin/bash:0:0:dummy:dummy:dummy:"
-            new_status['groups'][cua_group] = []
+            new_status['groups'][cua_group] = {'members': [], 'attributes': group_attributes}
             if not isinstance(status.get(cua_group), list):
                 print(f"{modifyuser} --list {cua_group} ||")
                 print(f"  {{\n    echo \"{line}\" | {adduser} -f-\n  }}\n")
@@ -142,7 +146,7 @@ if len(dns):
                     for member in members:
                         m_uid = dn2rdns(member)['uid'][0]
                         user = f"sram-{co}-{m_uid}"
-                        new_status['groups'][cua_group].append(user)
+                        new_status['groups'][cua_group]['members'].append(user)
                         print(f"    #member: {user}")
                         if user not in status.get(cua_group, []):
                             if group_type == 'sys':
