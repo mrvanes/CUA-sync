@@ -6,7 +6,8 @@ import sys
 import yaml
 import json
 import ldap
-
+from datetime import datetime
+from datetime import timezone
 
 def dn2rdns(dn):
     rdns = {}
@@ -129,7 +130,8 @@ if len(dns):
             print(f"  #group: {cua_group}")
             # Create groups
             line=f"sram_group:description:dummy:{cua_group}:0:0:0:/bin/bash:0:0:dummy:dummy:dummy:"
-            new_status['groups'][cua_group] = {'members': [], 'attributes': group_attributes}
+            if cua_group not in new_status['groups']:
+                new_status['groups'][cua_group] = {'members': [], 'attributes': group_attributes}
             if not isinstance(status.get(cua_group), list):
                 print(f"{modifyuser} --list {cua_group} ||")
                 print(f"  {{\n    echo \"{line}\" | {adduser} -f-\n  }}\n")
@@ -157,11 +159,25 @@ if len(dns):
                                 raise ValueError
 
 
-removes = { k : status[k] for k in set(status) - set(new_status) }
-for user in removes:
-    print(f"#{user} remove")
-    print(f"{modifyuser} --list {user} &&")
-    print(f"  {modifyuser} --lock {user}")
+new_groups = new_status['groups']
+# new_groups['sram-delena-sara_test-darkenergy-sw']['members'].remove('sram-darkenergy-gvenekamp')
+# new_groups['sram-delena-login']['members'].remove('sram-darkenergy-gvenekamp')
+groups = status['groups']
+
+for group, values in groups.items():
+    if 'graced' in values:
+        if 'graced' in new_groups[group]:
+            new_groups[group]['graced'] = {**new_groups[group]['graced'], **groups[group]['graced']}
+        else:
+            new_groups[group]['graced'] = groups[group]['graced']
+
+removes = {k: set(groups[k]['members']) - set(new_groups[k]['members']) for k in groups if set(groups[k]['members']) - set(new_groups[k]['members'])}
+for group, users in removes.items():
+    for user in users:
+        if 'grace' in new_groups[group]['attributes']:
+            new_groups[group]['graced'] = {user: datetime.now(timezone.utc).isoformat()}
+            continue
+        print(f'# Remove {user} from {group}')
 
 with open(status_filename, 'w') as outfile:
     json.dump(new_status, outfile, indent=4)
