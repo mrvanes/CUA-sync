@@ -117,11 +117,9 @@ if len(dns):
             sram_group = list(group.keys())[0]
             tmp = list(group.values())[0]
             group_def, cua_group = tmp.split(':')
-            if '+' in group_def:
-                group_type, group_attributes = group_def.split('+', 1)
-            else:
-                group_type = group_def
-                group_attributes = []
+            tmp = group_def.split('+', 1)
+            group_type = tmp[0]
+            group_attributes = tmp[1:]
 
             if group_type == 'ign':
                 continue
