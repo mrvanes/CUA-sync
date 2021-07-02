@@ -124,6 +124,11 @@ if len(dns):
             if group_type == 'ign':
                 continue
 
+            if group_type == 'sys':
+                group_attributes.append('system_group')
+            if group_type == 'prj':
+                group_attributes.append('project_group')
+
             cua_group = f'{cua_group}'.format(**locals())
             print(f"  #group: {cua_group}")
             # Create groups
