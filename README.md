@@ -135,3 +135,9 @@ be safely be removed. Running the `cua_sync.py` script then generates all the
 script also generates commands that check first if LDAP entries already exists.
 After running the sync script with an empty or non-existing status file, the
 new status file reflects the current state of the CUA again.
+
+## Final remarks
+
+The sync script has be tested with python 3.5.3 and with the
+future_fstrings (1.2.0) package. When using Python 3.6 or above, the
+future_fstrings should not be necessary.
