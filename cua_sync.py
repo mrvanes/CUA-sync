@@ -8,6 +8,7 @@ import json
 import ldap
 from datetime import datetime
 from datetime import timezone
+from datetime import timedelta
 
 def dn2rdns(dn):
     rdns = {}
@@ -176,9 +177,32 @@ removes = {k: set(groups[k]['members']) - set(new_groups[k]['members']) for k in
 for group, users in removes.items():
     for user in users:
         if 'grace' in new_groups[group]['attributes']:
-            new_groups[group]['graced'] = {user: datetime.now(timezone.utc).isoformat()}
+            # new_groups[group]['graced'] = {user: datetime.now(timezone.utc).isoformat()}
+            new_groups[group]['graced'] = {user: datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%S.%f%z')}
             continue
+
         print(f'# Remove {user} from {group}')
+        if 'project_group' in new_groups[group]['attributes']:
+            print(f'{modifyuser} -r -g {group} {user}')
+        if 'system_group' in new_groups[group]['attributes']:
+            print(f'{modifyuser} -r -a delena {group} {user}')
+
+removes = {k: new_groups[k] for k in new_groups if 'graced' in new_groups[k]}
+if removes != {} and 'grace' not in cua:
+    sys.exit(f"Missing element from config: grace")
+
+try:
+    for group, values in removes.items():
+        grace_period = timedelta(days=cua['grace'][group]['grace_period'])
+        for user, grace_start in values['graced'].items():
+            grace_start = datetime.strptime(grace_start, '%Y-%m-%dT%H:%M:%S.%f%z')
+            if grace_start + grace_period < datetime.now(timezone.utc):
+                del new_status['groups'][group]['graced'][user]
+                print(f'# removing {user} from {group} after grace period ended. Started on {grace_start}')
+                print(f'{modifyuser} -r -a delena {group} {user}')
+except KeyError as e:
+    sys.exit(f"Missing element from config: {e}")
+
 
 with open(status_filename, 'w') as outfile:
     json.dump(new_status, outfile, indent=4)
