@@ -12,6 +12,6 @@ cua:
         - ai_res: "prj:ai_res"
         - foo: "ign:foo"
     grace:
-        ai_login:
+        my-org-my-co-ai-login:
             period: 90
 status_filename: "/home/<user>/status.json"
