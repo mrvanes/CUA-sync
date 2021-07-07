@@ -6,6 +6,7 @@ import sys
 import yaml
 import json
 import ldap
+import copy
 from datetime import datetime
 from datetime import timezone
 from datetime import timedelta
@@ -162,7 +163,6 @@ if len(dns):
                             else:
                                 raise ValueError
 
-
 new_groups = new_status['groups']
 groups = status['groups']
 
@@ -191,18 +191,20 @@ removes = {k: new_groups[k] for k in new_groups if 'graced' in new_groups[k]}
 if removes != {} and 'grace' not in cua:
     sys.exit(f"Missing element from config: grace")
 
+tmp_status = copy.deepcopy(new_status)
 try:
     for group, values in removes.items():
         grace_period = timedelta(days=cua['grace'][group]['grace_period'])
         for user, grace_start in values['graced'].items():
             grace_start = datetime.strptime(grace_start, '%Y-%m-%dT%H:%M:%S.%f%z')
             if grace_start + grace_period < datetime.now(timezone.utc):
-                del new_status['groups'][group]['graced'][user]
-                print(f'# removing {user} from {group} after grace period ended. Started on {grace_start}')
+                del tmp_status['groups'][group]['graced'][user]
+                print(f'# removing {user} from {group} after grace period ended. Grace period started on {grace_start}')
                 print(f'{modifyuser} -r -a delena {group} {user}')
 except KeyError as e:
     sys.exit(f"Missing element from config: {e}")
 
+new_status = tmp_status
 
 with open(status_filename, 'w') as outfile:
     json.dump(new_status, outfile, indent=4)
