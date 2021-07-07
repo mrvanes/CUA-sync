@@ -7,9 +7,7 @@ import yaml
 import json
 import ldap
 import copy
-from datetime import datetime
-from datetime import timezone
-from datetime import timedelta
+from datetime import datetime, timezone, timedelta
 
 def dn2rdns(dn):
     rdns = {}
